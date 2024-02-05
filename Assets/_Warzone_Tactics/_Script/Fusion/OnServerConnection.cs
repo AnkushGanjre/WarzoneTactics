@@ -59,7 +59,7 @@ namespace DonzaiGamecorp.WarzoneTactics
                 UIController.Instance.OnBothPlayersReady();
                 if (runner.IsServer)
                 {
-                    FindObjectOfType<PlayerDataNetworked>().OnBothPlayerSpawned();
+                    FindObjectOfType<PlayerNetworked>().OnBothPlayerSpawned();
                 }
             }
         }

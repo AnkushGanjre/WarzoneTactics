@@ -80,7 +80,7 @@ namespace DonzaiGamecorp.WarzoneTactics
             _playerTroops.SetActive(true);
             UIController.Instance.WorldCanvasPlayer.SetActive(false);
             UIController.Instance.GameInfoText.gameObject.SetActive(false);
-            FindObjectOfType<PlayerDataManager>().LocalPlayerObj.GetComponent<PlayerDataNetworked>().OnPlayerBunkerSelection(bunkerNum);
+            FindObjectOfType<PlayerDataManager>().LocalPlayerObj.GetComponent<PlayerNetworked>().OnPlayerBunkerSelection(bunkerNum);
         }
 
         #endregion
@@ -170,7 +170,7 @@ namespace DonzaiGamecorp.WarzoneTactics
         {
             yield return new WaitForSeconds(4f);
             _opponentTroops.SetActive(true);
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(3f);
             UIController.Instance.StrategyButton.onClick.Invoke();
             UIController.Instance.GameCountDownText.gameObject.SetActive(true);
         }
@@ -192,7 +192,7 @@ namespace DonzaiGamecorp.WarzoneTactics
             {
                 case 1:
                     flagPlayerPos.x = 2f;
-                    if (roundNum == 12)
+                    if (roundNum == 11)
                         flagPlayerPos.x = 10f;
                     break;
                 case 2:
@@ -200,7 +200,7 @@ namespace DonzaiGamecorp.WarzoneTactics
                     break;
                 case 3:
                     flagPlayerPos.x = 0f;
-                    if (roundNum == 8)
+                    if (roundNum == 7)
                         flagPlayerPos.x = 10f;
                     break;
                 case 4:
@@ -208,7 +208,7 @@ namespace DonzaiGamecorp.WarzoneTactics
                     break;
                 case 5:
                     flagPlayerPos.x = -2f;
-                    if (roundNum == 12)
+                    if (roundNum == 11)
                         flagPlayerPos.x = 10f;
                     break;
                 default:
@@ -224,7 +224,7 @@ namespace DonzaiGamecorp.WarzoneTactics
                 // Selection will be in reverse order
                 case 1:
                     flagOpponentPos.x = -2;
-                    if (roundNum == 12)
+                    if (roundNum == 11)
                         flagOpponentPos.x = 10f;
                     break;
                 case 2:
@@ -232,7 +232,7 @@ namespace DonzaiGamecorp.WarzoneTactics
                     break;
                 case 3:
                     flagOpponentPos.x = 0;
-                    if (roundNum == 8)
+                    if (roundNum == 7)
                         flagOpponentPos.x = 10f;
                     break;
                 case 4:
@@ -240,7 +240,7 @@ namespace DonzaiGamecorp.WarzoneTactics
                     break;
                 case 5:
                     flagOpponentPos.x = 2;
-                    if (roundNum == 12)
+                    if (roundNum == 11)
                         flagOpponentPos.x = 10f;
                     break;
                 default:
@@ -265,6 +265,15 @@ namespace DonzaiGamecorp.WarzoneTactics
         #endregion
 
         #region New Game round
+
+        public void StartRoundOne()
+        {
+            foreach (Transform t in _bunkerTransform)
+            {
+                t.gameObject.SetActive(true);
+            }
+            StartNewRound();
+        }
 
         public void StartNewRound()
         {

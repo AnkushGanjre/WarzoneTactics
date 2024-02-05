@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -47,11 +48,18 @@ namespace DonzaiGamecorp.WarzoneTactics
         public Button GamePlayQuitButton;
         public Button StrategyButton;
         public Button StrategyBackButton;
+        public Button GameRematchButton;
         Button _playerStrategyButton;
         Button _opponentStrategyButton;
         Button _errorPanelBackButton;
 
+        Scrollbar _strategyPanelScrollbar;
+
         Animator _gameInfoTextAnimator;
+
+        public Image PlayerAvatarImg;
+        public Image OpponentAvatarImg;
+        public List<Sprite> AllAvatars = new List<Sprite>();
 
         private void Awake()
         {
@@ -83,11 +91,17 @@ namespace DonzaiGamecorp.WarzoneTactics
             GamePlayQuitButton = GameObject.Find("GamePlayQuit_Button").GetComponent<Button>();
             StrategyButton = GameObject.Find("Strategy_Button").GetComponent<Button>();
             StrategyBackButton = GameObject.Find("StrategyClose_Button").GetComponent<Button>();
+            GameRematchButton = GameObject.Find("GameRematch_Button").GetComponent<Button>();
             _playerStrategyButton = GameObject.Find("PlayerStrategy_Button").GetComponent<Button>();
             _opponentStrategyButton = GameObject.Find("OpponentStrategy_Button").GetComponent<Button>();
             _errorPanelBackButton = GameObject.Find("ErrorPanelClose_Button").GetComponent<Button>();
 
+            _strategyPanelScrollbar = GameObject.Find("StrategyPanelScrollbar").GetComponent<Scrollbar>();
+
             _gameInfoTextAnimator = GameInfoText.GetComponent<Animator>();
+            
+            PlayerAvatarImg = GameObject.Find("PlayerAvatar_Img").GetComponent<Image>();
+            OpponentAvatarImg = GameObject.Find("OpponentAvatar_Img").GetComponent<Image>();
         }
 
         void Start()
@@ -99,6 +113,7 @@ namespace DonzaiGamecorp.WarzoneTactics
             StrategyBackButton.onClick.AddListener(() => { StrategyPanel.SetActive(false); });
             _playerStrategyButton.onClick.AddListener(() => { GeneratePlayerStrategy(); });
             _opponentStrategyButton.onClick.AddListener(() => { GenerateOpponentStrategy(); });
+            GameRematchButton.onClick.AddListener(() => { OnRematchRequest(); });
             _errorPanelBackButton.onClick.AddListener(() => { _errorPanel.SetActive(false); });
 
             StrategyPanel.SetActive(false);
@@ -120,6 +135,7 @@ namespace DonzaiGamecorp.WarzoneTactics
             WorldCanvasOpponent.gameObject.SetActive(false);
             _playerLivesTransf.gameObject.SetActive(false);
             _opponentLivesTransf.gameObject.SetActive(false);
+            GameRematchButton.gameObject.SetActive(false);
         }
 
         public void OnGamePlayBackBtn()
@@ -133,6 +149,52 @@ namespace DonzaiGamecorp.WarzoneTactics
             WorldCanvasOpponent.SetActive(false);
             OnTransition();
             FusionManager.Instance.Runner.Shutdown();
+        }
+
+        public void StartRoundOne()
+        {
+            _playerDataManager.PlayerTroopList.Clear();
+            _playerDataManager.OpponentTroopList.Clear();
+
+            foreach (Transform t in WorldCanvasPlayer.transform)
+            {
+                t.gameObject.SetActive(true);
+            }
+            foreach (Transform t in WorldCanvasOpponent.transform)
+            {
+                t.gameObject.SetActive(true);
+            }
+            foreach (Transform t in WorldCanvasTarget.transform)
+            {
+                t.gameObject.SetActive(true);
+            }
+
+            foreach (Transform t in _playerLivesTransf)
+            {
+                t.gameObject.SetActive(true);
+            }
+            foreach (Transform t in _opponentLivesTransf)
+            {
+                t.gameObject.SetActive(true);
+            }
+
+            GameInfoText.transform.localPosition = Vector3.zero;
+            NewRoundStart();
+        }
+
+        private void OnRematchRequest()
+        {
+            if (FusionManager.Instance.Runner.IsServer)
+            {
+                _playerDataManager.RemotePlayerObj.GetComponent<PlayerNetworked>().RPC_RematchByHost();
+            }
+            else
+            {
+                _playerDataManager.LocalPlayerObj.GetComponent<PlayerNetworked>().RPC_RematchByClient();
+            }
+
+            _playerDataManager.didHostReqRematch = true;
+            GameRematchButton.gameObject.SetActive(false);
         }
 
         #endregion
@@ -220,7 +282,7 @@ namespace DonzaiGamecorp.WarzoneTactics
             }
 
             GameInfoText.gameObject.SetActive(false);
-            FindObjectOfType<PlayerDataManager>().LocalPlayerObj.GetComponent<PlayerDataNetworked>().OnOpponentBunkerSelection(bunkerNum);
+            FindObjectOfType<PlayerDataManager>().LocalPlayerObj.GetComponent<PlayerNetworked>().OnOpponentBunkerSelection(bunkerNum);
         }
 
         public void OnCameraDefaultPosition()
@@ -244,7 +306,7 @@ namespace DonzaiGamecorp.WarzoneTactics
             yield return new WaitForSeconds(3.5f);
             GameInfoText.gameObject.SetActive(true);
             GameInfoText.text = roundResult;
-            _gameInfoTextAnimator.SetTrigger("TextGoUpperTrgr");
+            GameInfoText.transform.localPosition = Vector3.zero;
         }
 
         public void NewRoundStart()
@@ -262,8 +324,11 @@ namespace DonzaiGamecorp.WarzoneTactics
         {
             yield return new WaitForSeconds(6f);
             GameInfoText.gameObject.SetActive(true);
+            GameCountDownText.gameObject.SetActive(false);
             GameInfoText.text = roundResult;
-            _gameInfoTextAnimator.SetTrigger("TextGoNormalTrgr");
+            GameInfoText.transform.localPosition = Vector3.zero;
+            yield return new WaitForSeconds(2f);
+            GameRematchButton.gameObject.SetActive(true);
         }
 
         #endregion
@@ -325,6 +390,7 @@ namespace DonzaiGamecorp.WarzoneTactics
         public void GenerateOpponentStrategy()
         {
             // Set Header Text & Button's Alpha
+            _strategyPanelScrollbar.value = 0f;
             _headerStrategyPanelText.text = "Opponent's  Strategy";
             _playerStrategyButton.GetComponent<Image>().color = new Color32(0, 0, 0, 150);
             _playerStrategyButton.GetComponentInChildren<TextMeshProUGUI>().color = new Color32(255, 255, 255, 100);
@@ -375,6 +441,7 @@ namespace DonzaiGamecorp.WarzoneTactics
         public void GeneratePlayerStrategy()
         {
             // Set Header Text & Button's Alpha
+            _strategyPanelScrollbar.value = 0f;
             _headerStrategyPanelText.text = "Player's  Strategy";
             _opponentStrategyButton.GetComponent<Image>().color = new Color32(0, 0, 0, 150);
             _opponentStrategyButton.GetComponentInChildren<TextMeshProUGUI>().color = new Color32(255, 255, 255, 100);
